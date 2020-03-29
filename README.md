@@ -48,3 +48,7 @@ To **quit the programm** simply press q while in the main overview (i.e. not ins
 
 **TODO**:
 - add vim key-bindings for navigating the UI
+
+## Notes
+
+hue-tui was made using [py_cui](https://github.com/jwlodek/py_cui). Check the project out!
