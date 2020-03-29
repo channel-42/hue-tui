@@ -1,11 +1,24 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import sys
 import json
-import time
 import py_cui as cui
-sys.path.append('/path')
-from hue_snek import Hue, Light
+import os
+from os.path import expanduser
+from hue_snek_pkg.hue_snek import Hue, Light
+
+HOME = expanduser("~")
+
+
+def ensure_dir(file_path):
+    """ensure_dir.
+    makes sure that directory exists and creates one should the directory not exist
+    Args:
+        file_path: path to file
+    """
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
 
 def login():
@@ -13,7 +26,7 @@ def login():
     checks if userdata has been inserted into json file
     """
     try:
-        with open("login.json") as f:
+        with open(f"{HOME}/.config/hue-tui/login.json") as f:
             data = json.load(f)
             ip = data["ip"]
             user = data["user"]
@@ -48,9 +61,9 @@ class LoginMaker:
         """
         ip = self.ip_field.get()
         user = self.user_field.get()
-        open("login.json", "w").close()
+        open(f"{HOME}/.config/hue-tui/login.json", "w").close()
         data = {"ip": ip, "user": user}
-        with open("login.json", "w") as f:
+        with open(f"{HOME}/.config/hue-tui/login.json", "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         self.master.show_message_popup("File created, please restart hue-tui",
                                        f'ip: {ip}, user: {user}')
@@ -198,6 +211,9 @@ class HueTui:
         self.active_box.write(self.active)
 
 
+#check if config directory exists
+ensure_dir(f"{HOME}/.config/hue-tui/")
+
 if login() == 1:
     log = cui.PyCUI(3, 2)
     log.set_title("Login Maker")
@@ -208,7 +224,7 @@ else:
     H = Hue(login()["ip"], login()["user"])
 
     if int(H.checkup()) == 1:
-        print("Error while connecting to the Hue API")
+        raise Exception("Error while connecting to the Hue API")
         sys.exit(0)
 
     root = cui.PyCUI(5, 2)
