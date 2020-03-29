@@ -11,13 +11,13 @@
 
 Install hue-tui with:   
 
-`pip install hue-tui`
+`pip install huetui`
 
 This should fetch all the necesary dependencies. Nevertheless, make sure that all dependencies are installed.
 
 Launch hui-tui by typing `huetui` into your terminal.   
 
-Should you get the error `command not found: huetui`, check that `$HOME/.local/bin` is in your `$PATH`. This can be done by adding `export PATH="$HOME/.local/bin:$PATH"` to your .bashrc/.zshrc.
+Should you get the error `command not found: huetui`, restart your terminal. Should the error persist, check that `$HOME/.local/bin` is in your `$PATH`. This can be done by adding `export PATH="$HOME/.local/bin:$PATH"` to your .bashrc/.zshrc.
 
 ### Dependencies
 - python3
