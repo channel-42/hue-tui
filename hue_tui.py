@@ -2,24 +2,59 @@
 
 import sys
 import json
+import time
 import py_cui as cui
 sys.path.append('/path')
-from hue_snek import hue, Light
+from hue_snek import Hue, Light
 
 
 def login():
     """login.
-    checks if userdate has been inserted into json file
+    checks if userdata has been inserted into json file
     """
-    with open("login.json") as f:
-        data = json.load(f)
-        ip = data["ip"]
-        user = data["user"]
-    if (ip != "") and (user != ""):
-        return data
-    else:
-        raise Exception("No IP and/or API user found")
+    try:
+        with open("login.json") as f:
+            data = json.load(f)
+            ip = data["ip"]
+            user = data["user"]
+        if (ip != "") and (user != ""):
+            return data
+    except:
+        #raise Exception("No IP and/or API user found")
         return 1
+
+
+class LoginMaker:
+    """LoginMaker.
+    Main login creator
+    """
+    def __init__(self, master):
+        self.master = master
+
+        self.ip_field = self.master.add_text_box("Enter bridge's IP", 0, 0, 1,
+                                                 2)
+        self.user_field = self.master.add_text_box("Enter the API user", 1, 0,
+                                                   1, 2)
+        self.submit_button = self.master.add_button("Make Login",
+                                                    2,
+                                                    0,
+                                                    1,
+                                                    2,
+                                                    command=self.make_login)
+
+    def make_login(self):
+        """make_login.
+        Gets field data and dumps it as json to a file
+        """
+        ip = self.ip_field.get()
+        user = self.user_field.get()
+        open("login.json", "w").close()
+        data = {"ip": ip, "user": user}
+        with open("login.json", "w") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        self.master.show_message_popup("File created, please restart hue-tui",
+                                       f'ip: {ip}, user: {user}')
+        return 0
 
 
 class HueTui:
@@ -163,13 +198,20 @@ class HueTui:
         self.active_box.write(self.active)
 
 
-H = hue(login()["ip"], login()["user"])
+if login() == 1:
+    log = cui.PyCUI(3, 2)
+    log.set_title("Login Maker")
+    Login = LoginMaker(log)
+    log.start()
 
-if int(H.checkup()) == 1:
-    print("Error while connecting to the Hue API")
-    sys.exit(0)
+else:
+    H = Hue(login()["ip"], login()["user"])
 
-root = cui.PyCUI(5, 2)
-root.set_title("Hue TUI")
-Main = HueTui(root)
-root.start()
+    if int(H.checkup()) == 1:
+        print("Error while connecting to the Hue API")
+        sys.exit(0)
+
+    root = cui.PyCUI(5, 2)
+    root.set_title("Hue TUI")
+    Main = HueTui(root)
+    root.start()
