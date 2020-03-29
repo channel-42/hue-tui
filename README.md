@@ -1,17 +1,26 @@
 # hue-tui ![](https://img.shields.io/badge/Status-WIP-red.svg) ![](https://img.shields.io/badge/License-MIT-orange.svg) 
 > A tui for Philips Hue
 
-![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.png "A pretty screenshot")
+![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
 
 ## About 
 
-**hue-tui** is a tui *(Terminal User Interface)* that allows for easy control of your Philips Hue devices. It uses my Hue-API library ![hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
+**hue-tui** is a tui *(Terminal User Interface)* that allows for easy control of your Philips Hue lights. It uses my Hue-API library ![hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
 
 ## Setup
 
+> I'm currently working on simplifying the installation process for both hue-tui and hue-snek. The first step is to make hue-snek installable via pip. This will remove the need for a user specific path in the import section.
+
 Since this tui is in it's early development stages, setup is somewhat cumbersome.
 
-At the moment the bridge IP address and API username have to be inserted into the sourcecode of the programmm. This process will be automated in later versions of hue-tui.
+After cloning both this and the ![hue-snek](https://github.com/channel-42/hue-snek) repo, add the path of hue_snek.py to hue_tui.py:
+
+```python
+#in the import section change /path to your path to hue_snek.py
+
+sys.path.append('/path')    #edit this line
+from hue_snek import Hue, Light
+```
 
 To start hue-tui it is recommended to setup an alias in your `.zshrc` or `.bashrc` to avoid having to type `python 3 /path/to/hue_tui.py`.
 
@@ -31,9 +40,9 @@ To navigate the different modules use your arrow keys. You'll see your cursor mo
 - enable a scene for a group
 - display bridge information
 - ASCII banner
-
-**TODO**:
 - indicate active lights, groups, scenes
 - create automated setup process for bridge information (inital setup function)
+
+**TODO**:
 - make the installation-process easier
 
