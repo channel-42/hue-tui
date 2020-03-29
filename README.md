@@ -1,4 +1,4 @@
-# hue-tui [![](https://img.shields.io/badge/Version-0.1-green.svg)](https://badge.fury.io/py/py-cui) ![](https://img.shields.io/badge/License-MIT-orange.svg) 
+# hue-tui [![](https://img.shields.io/badge/Version-0.1-green.svg)](https://pypi.org/project/huetui/) ![](https://img.shields.io/badge/License-MIT-orange.svg) 
 > A tui for Philips Hue
 
 ![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
