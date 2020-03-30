@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-
+'''
+New features from last realese: xrdb colors,
+'''
 import sys
 import json
+import re, subprocess, fnmatch, random
 import py_cui as cui
 import os
+from PIL import ImageColor
+from colormath.color_objects import XYZColor, sRGBColor
+from colormath.color_conversions import convert_color
 from os.path import expanduser
 from hue_snek_pkg.hue_snek import Hue, Light
 
@@ -83,7 +89,7 @@ class HueTui:
         self.active = ""
 
         #add banner
-        self.master.add_block_label(str(self.get_logo_text()), 0, 0)
+        self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
 
         #items for each menu
         self.lights = H.get_lights("name").values()
@@ -95,12 +101,19 @@ class HueTui:
             self.bridge.append(f"{param}: {val}")
 
         #creating each menu
-        self.lights_menu = self.master.add_scroll_menu("Lights", 1, 0, 2, 1)
-        self.groups_menu = self.master.add_scroll_menu("Groups", 3, 0, 2, 1)
-        self.scenes_menu = self.master.add_scroll_menu("Scenes", 1, 1, 2, 1)
-        self.active_box = self.master.add_text_block("Active", 3, 1, 2, 1)
+        self.lights_menu = self.master.add_scroll_menu("Lights", 1, 0, 2, 2)
+        self.groups_menu = self.master.add_scroll_menu("Groups", 3, 0, 2, 2)
+        self.scenes_menu = self.master.add_scroll_menu("Scenes", 1, 2, 2, 2)
+        self.active_box = self.master.add_text_block("Active", 3, 2, 2, 2)
         self.bridge_information = self.master.add_scroll_menu(
-            "Hue Bridge", 0, 1, 1, 1)
+            "Hue Bridge", 0, 2, 1, 1)
+        self.xdrb_random = self.master.add_button(
+            "Set active lights to random XRDB colors",
+            0,
+            3,
+            1,
+            1,
+            command=self.set_xrdb_colors)
 
         #adding items to each menu
         self.lights_menu.add_item_list(self.lights)
@@ -123,7 +136,7 @@ class HueTui:
         #toggle a light
         states = H.get_lights()
         for light in states.items():
-            if str(self.lights_menu.get()) == str(light[1].name):
+            if str(self.lights_menu.get()) == str(light[0].name):
                 if light[1].state == True:
                     H.set_light(light[0], "on", "false")
                 else:
@@ -210,6 +223,63 @@ class HueTui:
         self.active_box.clear()
         self.active_box.write(self.active)
 
+    def hex_to_xy(self, hex_color):
+        """hex_to_xyz.
+        Converts a hex color to a xy
+        Args:
+            hex_color: Hex color as string and with #
+        Returns:
+            A tupel with X, Y values (normalized)
+        """
+        rgb_tuple = ImageColor.getrgb(str(hex_color))
+        rgb_obj = sRGBColor(rgb_tuple[0], rgb_tuple[1], rgb_tuple[2])
+        xyz = convert_color(
+            rgb_obj,
+            XYZColor,
+        )
+        tup = xyz.get_value_tuple()
+        X = tup[0] / (tup[0] + tup[1] + tup[2])
+        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        return (X, Y)
+
+    def get_xresources(self):
+        """get_xresources.
+        Gets as colors from the users .Xresources file 
+        Returns:
+            A array with all colors in hex    
+        """
+        hex_array = []
+        cmd = ['xrdb', '-query', '|', 'grep', '"*color"']
+        proc = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+
+        out_error_tuple = proc.communicate()
+        list_out = out_error_tuple[0].decode("ascii").split("\n")
+        matches = fnmatch.filter(list_out, '*color*')
+        for entry in matches:
+            cl = re.sub(r'.*#', '#', entry)
+            hex_array.append(cl)
+
+        return hex_array
+
+    def set_xrdb_colors(self):
+        """set_xrdb_colors.
+        Selects random colors from .Xresources and sets all lights to them
+        """
+        random_xy = []
+        for color in self.get_xresources():
+            xy_color = self.hex_to_xy(color)
+            random_xy.append(xy_color)
+
+        for light in H.get_lights('id'):
+            random_color = random.choice(random_xy)
+            x = random_color[0]
+            y = random_color[1]
+            H.set_light(light, "xy", f"[{x}, {y}]")
+            self.master.show_message_popup(
+                "Info:", "Setting your lights to your XRDB colors")
+
 
 #check if config directory exists
 ensure_dir(f"{HOME}/.config/hue-tui/")
@@ -227,7 +297,7 @@ else:
         raise Exception("Error while connecting to the Hue API")
         sys.exit(0)
 
-    root = cui.PyCUI(5, 2)
+    root = cui.PyCUI(5, 4)
     root.set_title("Hue TUI")
     Main = HueTui(root)
     root.start()
