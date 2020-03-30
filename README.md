@@ -24,12 +24,28 @@ Should you get the error `command not found: huetui`, restart your terminal. Sho
 - hue-snek  (`pip install hue-snek-channel42`)
 - py_cui    (`pip install py-cui`)
 
+## Setup process
+
+To be able to use hue-tui, you need to have your bridge's IP address and a API username. The IP address can be found by e.g. going into your routers network tab and looking for a device with hostname "Philips-hue". To get an API username, check out [this](https://developers.meethue.com/develop/get-started-2/) short guide on the official Hue-Developers site.
+
+Once you have the IP address and unsername, you can start hue-tui by typin `huetui` into a terminal. This should open the first-time-setup, where you can input your IP and username. 
+
+> Tip: pasting with e.g. CTRL-SHIFT-V works (check what the pasting binding is in your specific terminal emulator) 
+
+To input your IP, navigate the cursor to the IP textfield (it should be there by default) and press ENTER. Then type or paste your bridge's IP address **without http://** at the begining. 
+
+> E.g.: 192.168.178.20
+
+Exit out of the textfield by pressing ESC and move your cursor to the username field. Enter your username just like before and then move your cursor to the big "make login" button. Press ENTER and a popup showing your IP and username should appear. Press ENTER to dismiss the popup and restart huetui by exiting out of the programm (press q).    
+
+After re-opening hue-tui you should see all your lights, groups, scenes, etc. like in the screenshot at the top.
+
 ## Using hue-tui
 
 Using hue-tui is easy:   
 
 To **navigate** the different modules use your arrow keys. You'll see your cursor move to the bottom right of the modules, which shows you which module is selected.    
-**Enter a module** by pressing enter. The selected option will be in bold. Use your arrow keys to navigate inside the module.    
+**Enter a module** by pressing ENTER. The selected option will be in bold. Use your arrow keys to navigate inside the module.    
 Once inside a module, press enter to **execute an action** (e.g. toggle a light).  
 To **exit a module** press ESC.
 To **quit the programm** simply press q while in the main overview (i.e. not inside a module).
