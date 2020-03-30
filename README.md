@@ -5,7 +5,7 @@
 
 ## About 
 
-**hue-tui** is a tui *(Terminal User Interface)* that allows for easy control of your Philips Hue lights. It uses my Hue-API library ![hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
+**hue-tui** is a tui *(Terminal User Interface)* that allows for easy control of your Philips Hue lights. It uses my Hue-API library [hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
 
 ## Installation
 
