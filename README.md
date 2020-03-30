@@ -30,6 +30,12 @@ To be able to use hue-tui, you need to have your bridge's IP address and a API u
 
 Once you have the IP address and unsername, you can start hue-tui by typin `huetui` into a terminal. This should open the first-time-setup, where you can input your IP and username. 
 
+<img align="left" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/master/.resources/setup1.png">    
+
+<img align="right" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/master/.resources/setup2.png">    
+
+<br><br><br> 
+       
 > Tip: pasting with e.g. CTRL-SHIFT-V works (check what the pasting binding is in your specific terminal emulator) 
 
 To input your IP, navigate the cursor to the IP textfield (it should be there by default) and press ENTER. Then type or paste your bridge's IP address **without http://** at the begining. 
@@ -41,6 +47,8 @@ Exit out of the textfield by pressing ESC and move your cursor to the username f
 After re-opening hue-tui you should see all your lights, groups, scenes, etc. like in the screenshot at the top.
 
 ## Using hue-tui
+
+![](https://github.com/channel-42/hue-tui/blob/master/.resources/huetui.gif)
 
 Using hue-tui is easy:   
 
