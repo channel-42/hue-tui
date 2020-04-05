@@ -87,6 +87,7 @@ class HueTui:
         self.scene = None
         self.bridge = []  #bridge info array
         self.active = ""
+        self.step = 30
 
         #add banner
         self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
@@ -124,8 +125,19 @@ class HueTui:
         self.is_active()
 
         #adding keycommands
+        #LIGHTS
         self.lights_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_light)
+        self.lights_menu.add_key_command(cui.keys.KEY_J_LOWER,
+                                         command=self.inc_light_bri)
+        self.lights_menu.add_key_command(cui.keys.KEY_K_LOWER,
+                                         command=self.dec_light_bri)
+        #GROUPS
         self.groups_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_group)
+        self.groups_menu.add_key_command(cui.keys.KEY_J_LOWER,
+                                         self.inc_group_bri)
+        self.groups_menu.add_key_command(cui.keys.KEY_K_LOWER,
+                                         self.dec_group_bri)
+        #SCENES
         self.scenes_menu.add_key_command(cui.keys.KEY_ENTER,
                                          command=self.scene_popup)
 
@@ -136,7 +148,7 @@ class HueTui:
         #toggle a light
         states = H.get_lights()
         for light in states.items():
-            if str(self.lights_menu.get()) == str(light[0].name):
+            if str(self.lights_menu.get()) == str(light[1].name):
                 if light[1].state == True:
                     H.set_light(light[0], "on", "false")
                 else:
@@ -272,13 +284,77 @@ class HueTui:
             xy_color = self.hex_to_xy(color)
             random_xy.append(xy_color)
 
+        self.toggle_light()
         for light in H.get_lights('id'):
             random_color = random.choice(random_xy)
-            x = random_color[0]
-            y = random_color[1]
+            x = random_color[0] + 0.05
+            y = random_color[1] + 0.05
+            H.set_light(light, "on", "true")
+            H.set_light(light, "bri", "250")
             H.set_light(light, "xy", f"[{x}, {y}]")
             self.master.show_message_popup(
                 "Info:", "Setting your lights to your XRDB colors")
+        return 0
+
+    def inc_light_bri(self):
+        """inc_light_bri.
+        increases a lights brightness by 30 steps
+        """
+        lights = H.get_lights()
+        keys = list(lights.keys())
+        for light, ident in zip(lights.items(), keys):
+            if str(self.lights_menu.get()) == str(light[1].name):
+                current = light[1].brightness
+                new = int(current) + self.step
+                if new > 255:
+                    new = 255
+                Light(ident, H).set("bri", f"{new}")
+                return 0
+
+    def dec_light_bri(self):
+        """inc_light_bri.
+        decreases a lights brightness by 30 steps
+        """
+        lights = H.get_lights()
+        keys = list(lights.keys())
+        for light, ident in zip(lights.items(), keys):
+            if str(self.lights_menu.get()) == str(light[1].name):
+                current = light[1].brightness
+                new = int(current) - self.step
+                if new > 255:
+                    new = 255
+                Light(ident, H).set("bri", f"{new}")
+                return 0
+
+    def inc_group_bri(self):
+        """inc_group_bri.
+        increases a groups brightness
+        """
+        groups = H.get_groups()
+        keys = list(groups.keys())
+        for group, ident in zip(groups.items(), keys):
+            if str(self.groups_menu.get()) == str(group[1]["name"]):
+                current = H.get_group(ident, "bri")
+                new = int(current) + self.step
+                if new > 255:
+                    new = 255
+                H.set_group(ident, "bri", f"{new}")
+                return 0
+
+    def dec_group_bri(self):
+        """inc_group_bri.
+        increases a groups brightness
+        """
+        groups = H.get_groups()
+        keys = list(groups.keys())
+        for group, ident in zip(groups.items(), keys):
+            if str(self.groups_menu.get()) == str(group[1]["name"]):
+                current = H.get_group(ident, "bri")
+                new = int(current) - self.step
+                if new > 255:
+                    new = 255
+                H.set_group(ident, "bri", f"{new}")
+                return 0
 
 
 #check if config directory exists
