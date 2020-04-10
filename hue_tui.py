@@ -4,9 +4,9 @@ New features from last realese: xrdb colors,
 '''
 import sys
 import json
+import os
 import re, subprocess, fnmatch, random
 import py_cui as cui
-import os
 from PIL import ImageColor
 from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
@@ -108,13 +108,12 @@ class HueTui:
         self.active_box = self.master.add_text_block("Active", 3, 2, 2, 2)
         self.bridge_information = self.master.add_scroll_menu(
             "Hue Bridge", 0, 2, 1, 1)
-        self.xdrb_random = self.master.add_button(
-            "Set active lights to random XRDB colors",
-            0,
-            3,
-            1,
-            1,
-            command=self.set_xrdb_colors)
+        self.xdrb_random = self.master.add_button("Random XRDB colors",
+                                                  0,
+                                                  3,
+                                                  1,
+                                                  1,
+                                                  command=self.set_xrdb_colors)
 
         #adding items to each menu
         self.lights_menu.add_item_list(self.lights)
@@ -360,6 +359,8 @@ class HueTui:
 #check if config directory exists
 ensure_dir(f"{HOME}/.config/hue-tui/")
 
+#START-UP PROCEDURE
+#check if config exists, then check for connection to Bridge
 if login() == 1:
     log = cui.PyCUI(3, 2)
     log.set_title("Login Maker")
