@@ -5,6 +5,7 @@ New features from last realese: xrdb colors,
 import sys
 import json
 import os
+import time
 import re, subprocess, fnmatch, random
 import py_cui as cui
 from PIL import ImageColor
@@ -88,6 +89,7 @@ class HueTui:
         self.bridge = []  #bridge info array
         self.active = ""
         self.step = 30
+        self.disco = False
 
         #add banner
         self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
@@ -130,6 +132,8 @@ class HueTui:
                                          command=self.inc_light_bri)
         self.lights_menu.add_key_command(cui.keys.KEY_K_LOWER,
                                          command=self.dec_light_bri)
+        self.lights_menu.add_key_command(cui.keys.KEY_D_LOWER,
+                                         self.disco_toggle)
         #GROUPS
         self.groups_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_group)
         self.groups_menu.add_key_command(cui.keys.KEY_J_LOWER,
@@ -355,10 +359,36 @@ class HueTui:
                 H.set_group(ident, "bri", f"{new}")
                 return 0
 
+    def disco_toggle(self):
+        """disco_toggle.
+        show popup and toggle disco mode
+        """
+        self.master.show_yes_no_popup(
+            "Disco Mode? Once activated, press STRG+C to quit.",
+            self.disco_mode)
+        return 0
+
+    def disco_mode(self, dummy):
+        """disco_mode.
+            toggle disco mode :^)
+        """
+        if dummy == False:
+            return 1
+        lights = H.get_lights()
+        try:
+            while True:
+                for light in lights.items():
+                    random_hue = random.randrange(0, 50000)
+                    random_sat = random.randrange(0, 255)
+                    H.set_light(light[0], "hue", f'{random_hue}')
+                    H.set_light(light[0], "sat", f'{random_sat}')
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            return 1
+
 
 #check if config directory exists
 ensure_dir(f"{HOME}/.config/hue-tui/")
-
 #START-UP PROCEDURE
 #check if config exists, then check for connection to Bridge
 if login() == 1:
