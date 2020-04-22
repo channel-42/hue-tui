@@ -6,7 +6,7 @@ import sys
 import json
 import os
 import time
-import re, subprocess, fnmatch, random
+import re, fnmatch, random
 import py_cui as cui
 from PIL import ImageColor
 from colormath.color_objects import XYZColor, sRGBColor
