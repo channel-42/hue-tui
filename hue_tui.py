@@ -102,6 +102,10 @@ class HueTui:
         #add items to bridge array (dict -> array)
         for param, val in H.get_bridge_info().items():
             self.bridge.append(f"{param}: {val}")
+        counter = 0
+        for light in H.get_lights():
+            counter += 1
+        self.bridge.append(f"detected lights: {counter}")
 
         #creating each menu
         self.lights_menu = self.master.add_scroll_menu("Lights", 1, 0, 2, 2)
@@ -364,7 +368,7 @@ class HueTui:
         show popup and toggle disco mode
         """
         self.master.show_yes_no_popup(
-            "Disco Mode? Once activated, press STRG+C to quit.",
+            "Disco Mode? Once activated, press STRG+C to quit ",
             self.disco_mode)
         return 0
 
@@ -376,6 +380,8 @@ class HueTui:
             return 1
         lights = H.get_lights()
         try:
+            for light in lights.items():
+                H.set_light(light[0], "bri", '150')
             while True:
                 for light in lights.items():
                     random_hue = random.randrange(0, 50000)
