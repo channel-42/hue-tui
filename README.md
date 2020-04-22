@@ -1,4 +1,4 @@
-# hue-tui [![](https://img.shields.io/badge/version-0.1-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
+# hue-tui [![](https://img.shields.io/badge/version-0.2-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
 > A tui for Philips Hue
 
 ![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
@@ -54,24 +54,13 @@ Using hue-tui is easy:
 
 To **navigate** the different modules use your arrow keys. You'll see your cursor move to the bottom right of the modules, which shows you which module is selected.    
 **Enter a module** by pressing ENTER. The selected option will be in bold. Use your arrow keys to navigate inside the module.    
-Once inside a module, press enter to **execute an action** (e.g. toggle a light).  
+Once inside a module, press enter to **execute an action** (e.g. toggle a light).
+To **change individual light or group brightness** move to the desired light or group and press j (increase) or k (decrease).
 To **exit a module** press ESC.
 To **quit the programm** simply press q while in the main overview (i.e. not inside a module).
 
-## Progress
-
-**Done**:
-- toggle individual lights
-- toggle individual groups
-- enable a scene for a group
-- display bridge information
-- ASCII banner
-- indicate active lights, groups, scenes
-- create automated setup process for bridge information (inital setup function)
-- simplify installation process
-
-**TODO**:
-- add vim key-bindings for navigating the UI
+### Misc. feature
+To **start disco mode** navigate and enter the lights menu and press q.
 
 ## Notes
 
