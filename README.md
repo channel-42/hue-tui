@@ -17,12 +17,18 @@ This should fetch all the necesary dependencies. Nevertheless, make sure that al
 
 Launch hui-tui by typing `huetui` into your terminal.   
 
-Should you get the error `command not found: huetui`, restart your terminal. Should the error persist, check that `$HOME/.local/bin` is in your `$PATH`. This can be done by adding `export PATH="$HOME/.local/bin:$PATH"` to your .bashrc/.zshrc.
+>Should you get the error `command not found: huetui`, restart your terminal. Should the error persist, check that `$HOME/.local/bin` is in your `$PATH`. This can be done by adding `export PATH="$HOME/.local/bin:$PATH"` to your .bashrc/.zshrc.
 
 ### Dependencies
-- python3
-- hue-snek  (`pip install hue-snek-channel42`)
-- py_cui    (`pip install py-cui`)
+
+- python3\
+
+The following dependencies should be downloaded automatically when installing via pip. If you're cloning the repo, make sure to manually install them.
+
+- hue-snek  --> `pip install hue-snek-channel42`
+- py_cui    --> `pip install py-cui`
+- Pillow    --> `pip install Pillow`
+- colormath --> `pip install colormath`
 
 ## Setup process
 
@@ -52,15 +58,15 @@ After re-opening hue-tui you should see all your lights, groups, scenes, etc. li
 
 Using hue-tui is easy:   
 
-To **navigate** the different modules use your arrow keys. You'll see your cursor move to the bottom right of the modules, which shows you which module is selected.    
-**Enter a module** by pressing ENTER. The selected option will be in bold. Use your arrow keys to navigate inside the module.    
-Once inside a module, press enter to **execute an action** (e.g. toggle a light).
-To **change individual light or group brightness** move to the desired light or group and press j (increase) or k (decrease).
-To **exit a module** press ESC.
+To **navigate** the different modules use your arrow keys. You'll see your cursor move to the bottom right of the modules, which shows you which module is selected.\
+**Enter a module** by pressing ENTER. The selected option will be in bold.\
+Once inside a module, Use your arrow keys to **navigate** and press enter to **execute an action** (e.g. toggle a light).\
+To **change individual light or group brightness** move to the desired light or group and press j (increase) or k (decrease).\
+To **exit a module** press ESC.\
 To **quit the programm** simply press q while in the main overview (i.e. not inside a module).
 
 ### Misc. feature
-To **start disco mode** navigate and enter the lights menu and press q.
+To **start disco mode** navigate and enter the lights menu and press d.
 
 ## Notes
 
