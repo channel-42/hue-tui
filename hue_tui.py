@@ -6,9 +6,9 @@ import sys
 import json
 import os
 import time
-import re, fnmatch, random
+import re, fnmatch, random, subprocess
 import py_cui as cui
-from PIL import ImageColor
+from PIL import ImageColor, Image
 from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
 from os.path import expanduser
@@ -69,7 +69,7 @@ class LoginMaker:
         ip = self.ip_field.get()
         user = self.user_field.get()
         open(f"{HOME}/.config/hue-tui/login.json", "w").close()
-        data = {"ip": ip, "user": user}
+        data = {"ip": ip, "user": user, "wpp": None}
         with open(f"{HOME}/.config/hue-tui/login.json", "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         self.master.show_message_popup("File created, please restart hue-tui",
@@ -94,6 +94,14 @@ class HueTui:
         #add banner
         self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
 
+        #parse wallpaper file path
+        try:
+            with open(f"{HOME}/.config/hue-tui/login.json") as f:
+                data = json.load(f)
+                self.WALL = data["wpp"]
+        except:
+            self.WALL = None
+
         #items for each menu
         self.lights = H.get_lights("name").values()
         self.groups = H.get_groups("name").values()
@@ -113,14 +121,15 @@ class HueTui:
         self.scenes_menu = self.master.add_scroll_menu("Scenes", 1, 2, 2, 2)
         self.active_box = self.master.add_text_block("Active", 3, 2, 2, 2)
         self.bridge_information = self.master.add_scroll_menu(
-            "Hue Bridge", 0, 2, 1, 1)
-        self.xdrb_random = self.master.add_button("Random XRDB colors",
+            "Hue Bridge", 0, 2, 1, 2)
+        self.xdrb_random = self.master.add_button("random XRDB colors",
+                                                  5,
                                                   0,
-                                                  3,
                                                   1,
-                                                  1,
+                                                  2,
                                                   command=self.set_xrdb_colors)
-
+        self.wallpaper_color = self.master.add_button(
+            "wallpaper colors", 5, 2, 1, 2, command=self.set_wallpaper_colors)
         #adding items to each menu
         self.lights_menu.add_item_list(self.lights)
         self.groups_menu.add_item_list(self.groups)
@@ -303,6 +312,66 @@ class HueTui:
                 "Info:", "Setting your lights to your XRDB colors")
         return 0
 
+    def get_main_colors(self, file):
+        """get_main_colors.
+        gets mail 4 colors from a given image file
+        Args:
+            file: path to image file
+        """
+        ret = []
+        img = Image.open(file)
+        colors = img.convert("RGB").getcolors(200000000)
+        cnt = 0
+        for color in sorted(colors, reverse=True):
+            ret.append(color[1])
+            cnt += 1
+            if cnt == 4:
+                break
+        return ret
+
+    def rgb_to_xy(self, rgb_color):
+        """rgb_to_xy.
+        convert a rgb tuple to a xy tuple
+        Args:
+            rgb_color: rgb tuple
+        """
+        rgb_obj = sRGBColor(rgb_color[0], rgb_color[1], rgb_color[2])
+        xyz = convert_color(
+            rgb_obj,
+            XYZColor,
+        )
+        tup = xyz.get_value_tuple()
+        X = tup[0] / (tup[0] + tup[1] + tup[2])
+        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        return (X, Y)
+
+    def set_wallpaper_colors(self):
+        """set_wallpaper_colors.
+        sets lights to main colors of wallpaper defined in the config
+        """
+        try:
+            main_colors = self.get_main_colors(self.WALL)
+        except:
+            self.master.show_error_popup(
+                "No wallpaper set",
+                "Check the config. e.g.: /home/<user>/path/to/file.jpg")
+            return 1
+        xy_colors = []
+        for color in main_colors:
+            xy_colors.append(self.rgb_to_xy(color))
+
+        self.toggle_light()
+        for light in H.get_lights('id'):
+            random_color = random.choice(xy_colors)
+            x = random_color[0] + 0.05
+            y = random_color[1] + 0.05
+            H.set_light(light, "on", "true")
+            H.set_light(light, "bri", "250")
+            H.set_light(light, "xy", f"[{x}, {y}]")
+            self.master.show_message_popup(
+                "Info:", "Setting your lights to your wallpaper colors")
+        return 0
+
     def inc_light_bri(self):
         """inc_light_bri.
         increases a lights brightness by 30 steps
@@ -410,7 +479,7 @@ else:
         raise Exception("Error while connecting to the Hue API")
         sys.exit(0)
 
-    root = cui.PyCUI(5, 4)
+    root = cui.PyCUI(6, 4)
     root.set_title("Hue TUI")
     Main = HueTui(root)
     root.start()
