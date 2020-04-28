@@ -1,4 +1,4 @@
-# hue-tui [![](https://img.shields.io/badge/version-0.2-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
+# hue-tui [![](https://img.shields.io/badge/version-0.3-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
 > A tui for Philips Hue
 
 ![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
@@ -67,6 +67,8 @@ To **quit the programm** simply press q while in the main overview (i.e. not ins
 
 ### Misc. feature
 To **start disco mode** navigate and enter the lights menu and press d.
+To **set xrdb colors** navigate to the button and press enter.
+To **set wallpaper colors** navigate to the button and press enter.
 
 ## Notes
 
