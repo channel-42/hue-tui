@@ -21,7 +21,7 @@ Launch hui-tui by typing `huetui` into your terminal.
 
 ### Dependencies
 
-- python3\
+- python3
 
 The following dependencies should be downloaded automatically when installing via pip. If you're cloning the repo, make sure to manually install them.
 
