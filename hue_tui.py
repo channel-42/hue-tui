@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-New features from last realese: xrdb colors,
+New features from last realese: dynamic wallpaper detection with feh
 '''
 import sys
 import json
@@ -95,12 +95,22 @@ class HueTui:
         self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
 
         #parse wallpaper file path
+        #if not set in config, try to find .fehbg and use that
         try:
             with open(f"{HOME}/.config/hue-tui/login.json") as f:
                 data = json.load(f)
-                self.WALL = data["wpp"]
+                if data["wpp"] == None:
+                    try: 
+                        with open(f"{HOME}/.fehbg", "r") as bgf:
+                            bg_data = bgf.read().replace("\n","").replace("#!/bin/shfeh --no-fehbg --bg-fill '", "").replace("' ","")
+                            self.WALL = bg_data
+                    except:
+                        None
+                else:
+                    self.WALL = data["wpp"]
         except:
             self.WALL = None
+
 
         #items for each menu
         self.lights = H.get_lights("name").values()
