@@ -276,8 +276,12 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        X = tup[0] / (tup[0] + tup[1] + tup[2])
-        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        if tup[0]+tup[1]+tup[2] > 0:
+            X = tup[0] / (tup[0] + tup[1] + tup[2])
+            Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        else:
+            X = 0
+            Y = 0.001        
         return (X, Y)
 
     def get_xresources(self):
@@ -351,8 +355,12 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        X = tup[0] / (tup[0] + tup[1] + tup[2])
-        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        if tup[0]+tup[1]+tup[2] > 0:
+            X = tup[0] / (tup[0] + tup[1] + tup[2])
+            Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        else:
+            X = 0
+            Y = 0.001
         return (X, Y)
 
     def set_wallpaper_colors(self):
