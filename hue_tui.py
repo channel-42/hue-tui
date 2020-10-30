@@ -100,9 +100,11 @@ class HueTui:
             with open(f"{HOME}/.config/hue-tui/login.json") as f:
                 data = json.load(f)
                 if data["wpp"] == None:
-                    try: 
+                    try:
                         with open(f"{HOME}/.fehbg", "r") as bgf:
-                            bg_data = bgf.read().replace("\n","").replace("#!/bin/shfeh --no-fehbg --bg-fill '", "").replace("' ","")
+                            bg_data = bgf.read().replace("\n", "").replace(
+                                "#!/bin/shfeh --no-fehbg --bg-fill '",
+                                "").replace("' ", "")
                             self.WALL = bg_data
                     except:
                         None
@@ -110,7 +112,6 @@ class HueTui:
                     self.WALL = data["wpp"]
         except:
             self.WALL = None
-
 
         #items for each menu
         self.lights = H.get_lights("name").values()
@@ -276,12 +277,12 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        if tup[0]+tup[1]+tup[2] > 0:
+        if tup[0] + tup[1] + tup[2] > 0:
             X = tup[0] / (tup[0] + tup[1] + tup[2])
             Y = tup[1] / (tup[0] + tup[1] + tup[2])
         else:
             X = 0
-            Y = 0.001        
+            Y = 0.001
         return (X, Y)
 
     def get_xresources(self):
@@ -355,7 +356,7 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        if tup[0]+tup[1]+tup[2] > 0:
+        if tup[0] + tup[1] + tup[2] > 0:
             X = tup[0] / (tup[0] + tup[1] + tup[2])
             Y = tup[1] / (tup[0] + tup[1] + tup[2])
         else:
