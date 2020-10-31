@@ -291,19 +291,9 @@ class HueTui:
         Returns:
             A array with all colors in hex    
         """
-        hex_array = []
-        cmd = ['xrdb', '-query', '|', 'grep', '"*color"']
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-
-        out_error_tuple = proc.communicate()
-        list_out = out_error_tuple[0].decode("ascii").split("\n")
-        matches = fnmatch.filter(list_out, '*color*')
-        for entry in matches:
-            cl = re.sub(r'.*#', '#', entry)
-            hex_array.append(cl)
-
+        cmd = "xrdb -query|grep 'color'|cut -f 2|sort -u"
+        hex_array = subprocess.check_output(
+            cmd, shell=True, universal_newlines=True).split('\n')[:-1]
         return hex_array
 
     def set_xrdb_colors(self):
@@ -329,7 +319,7 @@ class HueTui:
 
     def get_main_colors(self, file):
         """get_main_colors.
-        gets mail 4 colors from a given image file
+        gets main 4 colors from a given image file
         Args:
             file: path to image file
         """
