@@ -8,7 +8,8 @@ import os
 import time
 import re, fnmatch, random, subprocess
 import py_cui as cui
-from PIL import ImageColor, Image
+from colorthief import ColorThief
+from PIL import ImageColor
 from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
 from os.path import expanduser
@@ -323,19 +324,11 @@ class HueTui:
         Args:
             file: path to image file
         """
-        ret = []
-        img = Image.open(file)
-        colors = img.convert("RGB").getcolors(200000000)
-        cnt = 0
-        for color in sorted(colors, reverse=True):
-            ret.append(color[1])
-            cnt += 1
-            if cnt == 4:
-                break
-        return ret
+        color_thief = ColorThief(file)
+        return color_thief.get_palette(color_count=3, quality=50)
 
     def rgb_to_xy(self, rgb_color):
-        """rgb_to_xy.
+        """rgb_to_xy.  
         convert a rgb tuple to a xy tuple
         Args:
             rgb_color: rgb tuple
