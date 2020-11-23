@@ -91,6 +91,15 @@ class HueTui:
         self.active = ""
         self.step = 30
         self.disco = False
+        #used for changing light and group color
+        self.color_dict = {
+            "red": "#DE3838",
+            "blue": "#2122E2",
+            "green": "#2EF615",
+            "purple": "#5c0099",
+            "teal": "#26F0C9"
+        }
+        self.colors = ["red", "blue", "green", "purple", "teal"]
 
         #add banner
         self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
@@ -159,12 +168,17 @@ class HueTui:
                                          command=self.dec_light_bri)
         self.lights_menu.add_key_command(cui.keys.KEY_D_LOWER,
                                          self.disco_toggle)
+        self.lights_menu.add_key_command(cui.keys.KEY_C_LOWER,
+                                         self.light_color_popup)
+
         #GROUPS
         self.groups_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_group)
         self.groups_menu.add_key_command(cui.keys.KEY_J_LOWER,
                                          self.inc_group_bri)
         self.groups_menu.add_key_command(cui.keys.KEY_K_LOWER,
                                          self.dec_group_bri)
+        self.groups_menu.add_key_command(cui.keys.KEY_C_LOWER,
+                                         self.group_color_popup)
         #SCENES
         self.scenes_menu.add_key_command(cui.keys.KEY_ENTER,
                                          command=self.scene_popup)
@@ -462,6 +476,54 @@ class HueTui:
                 time.sleep(0.5)
         except KeyboardInterrupt:
             return 1
+
+    def light_color_popup(self):
+        """group_color_popup.
+        Popup for selecting and setting a lights's color
+        """
+        self.light = str(self.lights_menu.get())
+        self.master.show_menu_popup("Which color should be applied?",
+                                    self.colors, self.set_light_color)
+
+    def set_light_color(self, inp):
+        """set_group_color.
+        Sets whole light's color to passed color
+        Args:
+            inp: color name passed by popup menu
+        """
+        color = self.color_dict[f"{inp}"]
+        lights = H.get_lights()
+        x = self.hex_to_xy(color)[0]
+        y = self.hex_to_xy(color)[1]
+        for light in lights.items():
+            if str(self.lights_menu.get()) == str(light[1].name):
+                H.set_light(light[0], "on", "true")
+                H.set_light(light[0], "xy", f"[{x}, {y}]")
+        return 0
+
+    def group_color_popup(self):
+        """group_color_popup.
+        Popup for selecting and setting a group's color
+        """
+        self.group = str(self.groups_menu.get())
+        self.master.show_menu_popup("Which color should be applied?",
+                                    self.colors, self.set_group_color)
+
+    def set_group_color(self, inp):
+        """set_group_color.
+        Sets whole group's color to passed color
+        Args:
+            inp: color name passed by popup menu
+        """
+        color = self.color_dict[f"{inp}"]
+        groups = H.get_groups()
+        x = self.hex_to_xy(color)[0]
+        y = self.hex_to_xy(color)[1]
+        for group in groups.items():
+            if str(self.groups_menu.get()) == str(group[1]['name']):
+                H.set_group(group[0], "on", "true")
+                H.set_group(group[0], "xy", f"[{x}, {y}]")
+        return 0
 
 
 #check if config directory exists
