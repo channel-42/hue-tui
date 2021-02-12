@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 '''
-New features from last realese: dynamic wallpaper detection with feh
+HUE-TUI
+written by channel-42
 '''
 import sys
 import json
@@ -15,7 +16,10 @@ from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
 from os.path import expanduser
 from hue_snek_pkg.hue_snek import Hue, Light
-
+# change config path here if needed
+CONFIG_PATH = "~/.config/hue-tui/config.py"
+sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
+import config
 HOME = expanduser("~")
 
 
@@ -36,7 +40,7 @@ def login():
     checks if userdata has been inserted into json file
     """
     try:
-        with open(f"{HOME}/.config/hue-tui/config.json") as f:
+        with open(f"{HOME}/.config/hue-tui/login.json") as f:
             data = json.load(f)
             ip = data["ip"]
             user = data["user"]
@@ -71,9 +75,9 @@ class LoginMaker:
         """
         ip = self.ip_field.get()
         user = self.user_field.get()
-        open(f"{HOME}/.config/hue-tui/config.json", "w").close()
+        open(f"{HOME}/.config/hue-tui/login.json", "w").close()
         data = {"ip": ip, "user": user, "wpp": None}
-        with open(f"{HOME}/.config/hue-tui/config.json", "w") as f:
+        with open(f"{HOME}/.config/hue-tui/login.json", "w") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         self.master.show_message_popup("File created, please restart hue-tui",
                                        f'ip: {ip}, user: {user}')
@@ -91,40 +95,25 @@ class HueTui:
         self.scene = None
         self.bridge = []  # bridge info array
         self.active = list()
-        self.step = 30
+        self.step = config.STEP_SIZE
         self.disco = False
         self.WALL = None
         # used for changing light and group color
-        self.color_dict = {
-            "red": "#DE3838",
-            "blue": "#2122E2",
-            "green": "#2EF615",
-            "purple": "#5c0099",
-            "teal": "#26F0C9"
-        }
+        self.color_dict = config.COLOR_DICT
         self.colors = ["red", "blue", "green", "purple", "teal"]
 
-        # tui color dict
-        self.tui_cols = {
-            "magenta": cui.MAGENTA_ON_BLACK,
-            "white": cui.WHITE_ON_BLACK,
-            "yellow": cui.YELLOW_ON_BLACK,
-            "red": cui.RED_ON_BLACK,
-            "cyan": cui.CYAN_ON_BLACK,
-            "green": cui.GREEN_ON_BLACK,
-            "blue": cui.BLUE_ON_BLACK
-        }
-
         # UI COLORS
-        self.color = None
-        self.selected_color = None
-        self.border_color = None
-        self.logo_color = None
-        self.statusbar_color = None
-        self.titlebar_color = None
+        self.color = config.COLOR
+        self.selected_color = config.SELECTED_COLOR
+        self.border_color = config.BORDER_COLOR
+        self.logo_color = config.LOGO_COLOR
+        self.statusbar_color = config.STATUSBAR_COLOR
+        self.titlebar_color = config.TITLEBAR_COLOR
         # will be added when fixed
         # self.border_selected_color = None
-
+        # set unicode borders
+        if config.UNICODE:
+            self.master.toggle_unicode_borders()
         # add banner
         self.logo = self.master.add_block_label(
                 str(self.get_logo_text()), 0, 0, 1, 2)
@@ -190,7 +179,7 @@ class HueTui:
         self.scenes_menu.add_key_command(cui.keys.KEY_ENTER,
                                          command=self.scene_popup)
         # setup colors
-        self.load_config()
+        self.load_wpp()
         for key in self.master._widgets.keys():
             self.master.get_widgets()[key].set_color(self.color)
             self.master.get_widgets()[key].set_selected_color(
@@ -202,41 +191,22 @@ class HueTui:
         self.master.status_bar.set_color(self.statusbar_color)
         self.master.title_bar.set_color(self.titlebar_color)
 
-    def parse_color(self, color):
-        return self.tui_cols.get(color)
-
-    def load_config(self):
-        try:
-            with open(f"{HOME}/.config/hue-tui/config.json") as f:
-                data = json.load(f)
-                self.color = self.parse_color(data["color"])
-                self.selected_color = self.parse_color(data["selected_color"])
-                self.border_color = self.parse_color(data["border_color"])
-                self.logo_color = self.parse_color(data["logo_color"])
-                self.statusbar_color = self.parse_color(
-                        data["statusbar_color"])
-                self.titlebar_color = self.parse_color(data["titlebar_color"])
-                """
-                self.border_selected_color = self.parse_color(
-                        data["border_selected_color"]
-                        )
-                """
-                if data["unicode"]:
-                    self.master.toggle_unicode_borders()
-                # load wallpaper from given path or feh
-                if data["wpp"] is None:
-                    try:
-                        with open(f"{HOME}/.fehbg", "r") as bgf:
-                            bg_data = bgf.read().replace("\n", "").replace(
-                                "#!/bin/shfeh --no-fehbg --bg-fill '",
-                                "").replace("' ", "")
-                            self.WALL = bg_data
-                    except Exception:
-                        None
-                else:
-                    self.WALL = data["wpp"]
-        except Exception:
-            return Exception
+    def load_wpp(self):
+        """load_wpp.
+        Load user wallpaper if set in config.py
+        """
+        # load wallpaper from given path or feh
+        if config.WPP is None:
+            try:
+                with open(f"{HOME}/.fehbg", "r") as bgf:
+                    bg_data = bgf.read().replace("\n", "").replace(
+                        "#!/bin/shfeh --no-fehbg --bg-fill '",
+                        "").replace("' ", "")
+                    self.WALL = bg_data
+            except Exception:
+                None
+        else:
+            self.WALL = config.WPP
 
     def toggle_light(self):
         """toggle_light.
@@ -302,7 +272,7 @@ class HueTui:
         """
         # make banner
 
-        logo = '██╗  ██╗██╗   ██╗███████╗              ████████╗██╗   ██╗██╗\n'
+        logo =        '██╗  ██╗██╗   ██╗███████╗              ████████╗██╗   ██╗██╗\n'
         logo = logo + '██║  ██║██║   ██║██╔════╝              ╚══██╔══╝██║   ██║██║\n'
         logo = logo + '███████║██║   ██║█████╗      █████╗       ██║   ██║   ██║██║\n'
         logo = logo + '██╔══██║██║   ██║██╔══╝      ╚════╝       ██║   ██║   ██║██║\n'
