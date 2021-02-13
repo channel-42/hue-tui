@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 '''
 HUE-TUI
+a terminal user interface for controlling hue lights
+
 written by channel-42
 '''
+# general imports
 import sys
 import json
 import os
@@ -10,19 +13,27 @@ import time
 import random
 import subprocess
 import py_cui as cui
+
+# needed for color calculation
 from colorthief import ColorThief
 from PIL import ImageColor
 from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
 from os.path import expanduser
+
+# needed for bridge communication
 from hue_snek_pkg.hue_snek import Hue, Light
+
 # change config path here if needed
 CONFIG_PATH = "~/.config/hue-tui/config.py"
+
+# add config to python path and import
 sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
 import config
 HOME = expanduser("~")
 
 
+# some general functions to run before the TUI starts
 def ensure_dir(file_path):
     """ensure_dir.
     makes sure that directory exists and creates one should
@@ -37,7 +48,7 @@ def ensure_dir(file_path):
 
 def login():
     """login.
-    checks if userdata has been inserted into json file
+    checks if login file with filled fields exitsts
     """
     try:
         with open(f"{HOME}/.config/hue-tui/login.json") as f:
@@ -46,7 +57,12 @@ def login():
             user = data["user"]
         if (ip != "") and (user != ""):
             return data
-    except Exception:
+        else:
+            raise Exception("Error while reading login config. "
+                            "The IP and/or api user seem to be empty. "
+                            "Please check the config file or regenate it.")
+            sys.exit(os.EX_IOERR)
+    except OSError:
         return 1
 
 
@@ -56,8 +72,13 @@ class LoginMaker:
     """
 
     def __init__(self, master):
+        """__init__.
+        Args:
+            master: py_cui root module
+        """
         self.master = master
-
+        if config.UNICODE:
+            self.master.toggle_unicode_borders()
         self.ip_field = self.master.add_text_box("Enter bridge's IP", 0, 0, 1,
                                                  2)
         self.user_field = self.master.add_text_box("Enter the API user", 1, 0,
@@ -68,6 +89,22 @@ class LoginMaker:
                                                     1,
                                                     2,
                                                     command=self.make_login)
+        # add help text
+        self.ip_field.set_help_text("IP: enter your bridges IP addr."
+                                    " ESC to exit field")
+        self.user_field.set_help_text("USER: enter your api user."
+                                      " ESC to exit field")
+        # set colorscheme
+        for key in self.master._widgets.keys():
+            self.master.get_widgets()[key].set_color(config.COLOR)
+            self.master.get_widgets()[key].set_selected_color(
+                config.SELECTED_COLOR)
+            self.master.get_widgets()[key].set_border_color(
+                config.BORDER_COLOR)
+            # broken for some reason
+            # self.master.get_widgets()[key].set_focus_border_color(config.BORDER_SELECTED_COLOR)
+        self.master.status_bar.set_color(config.STATUSBAR_COLOR)
+        self.master.title_bar.set_color(config.TITLEBAR_COLOR)
 
     def make_login(self):
         """make_login.
@@ -87,7 +124,6 @@ class LoginMaker:
 class HueTui:
     def __init__(self, master):
         """__init__.
-
         Args:
             master: py_cui root module
         """
@@ -102,13 +138,6 @@ class HueTui:
         self.color_dict = config.COLOR_DICT
         self.colors = ["red", "blue", "green", "purple", "teal"]
 
-        # UI COLORS
-        self.color = config.COLOR
-        self.selected_color = config.SELECTED_COLOR
-        self.border_color = config.BORDER_COLOR
-        self.logo_color = config.LOGO_COLOR
-        self.statusbar_color = config.STATUSBAR_COLOR
-        self.titlebar_color = config.TITLEBAR_COLOR
         # will be added when fixed
         # self.border_selected_color = None
         # set unicode borders
@@ -116,7 +145,7 @@ class HueTui:
             self.master.toggle_unicode_borders()
         # add banner
         self.logo = self.master.add_block_label(
-                str(self.get_logo_text()), 0, 0, 1, 2)
+            str(self.get_logo_text()), 0, 0, 1, 2)
 
         # items for each menu
         self.lights = H.get_lights("name").values()
@@ -148,6 +177,19 @@ class HueTui:
                                                   command=self.set_xrdb_colors)
         self.wallpaper_color = self.master.add_button(
             "wallpaper colors", 5, 2, 1, 2, command=self.set_wallpaper_colors)
+        # add help text for statusbar
+        self.lights_menu.set_help_text("Lights: arrow keys to navigate,"
+                                       " j and k to change brightness,"
+                                       " c to set color,"
+                                       " d for disco mode, ENTER to toggle,"
+                                       " ESC to exit")
+        self.groups_menu.set_help_text("Groups: arrow keys to navigate,"
+                                       " j and k to change brightness,"
+                                       " c to set color,"
+                                       " ENTER to toggle, ESC to exit")
+        self.scenes_menu.set_help_text("Scenes: arrow keys to navigate,"
+                                       " ENTER to select,"
+                                       " ESC to exit")
         # adding items to each menu
         self.lights_menu.add_item_list(self.lights)
         self.groups_menu.add_item_list(self.groups)
@@ -181,19 +223,21 @@ class HueTui:
         # setup colors
         self.load_wpp()
         for key in self.master._widgets.keys():
-            self.master.get_widgets()[key].set_color(self.color)
+            self.master.get_widgets()[key].set_color(config.COLOR)
             self.master.get_widgets()[key].set_selected_color(
-                    self.selected_color)
-            self.master.get_widgets()[key].set_border_color(self.border_color)
+                config.SELECTED_COLOR)
+            self.master.get_widgets()[key].set_border_color(
+                config.BORDER_COLOR)
             # broken for some reason
-            # self.master.get_widgets()[key].set_focus_border_color(self.border_selected_color)
-        self.logo.set_color(self.logo_color)
-        self.master.status_bar.set_color(self.statusbar_color)
-        self.master.title_bar.set_color(self.titlebar_color)
+            # self.master.get_widgets()[key].set_focus_border_color(config.BORDER_SELECTED_COLOR)
+        self.logo.set_color(config.LOGO_COLOR)
+        self.master.status_bar.set_color(config.STATUSBAR_COLOR)
+        self.master.title_bar.set_color(config.TITLEBAR_COLOR)
 
     def load_wpp(self):
         """load_wpp.
-        Load user wallpaper if set in config.py
+        Load user wallpaper from path (if set in config.py)
+        or from feh's temp file
         """
         # load wallpaper from given path or feh
         if config.WPP is None:
@@ -272,7 +316,7 @@ class HueTui:
         """
         # make banner
 
-        logo =        '██╗  ██╗██╗   ██╗███████╗              ████████╗██╗   ██╗██╗\n'
+        logo = '██╗  ██╗██╗   ██╗███████╗              ████████╗██╗   ██╗██╗\n'
         logo = logo + '██║  ██║██║   ██║██╔════╝              ╚══██╔══╝██║   ██║██║\n'
         logo = logo + '███████║██║   ██║█████╗      █████╗       ██║   ██║   ██║██║\n'
         logo = logo + '██╔══██║██║   ██║██╔══╝      ╚════╝       ██║   ██║   ██║██║\n'
@@ -569,7 +613,7 @@ class HueTui:
         return 0
 
 
-# check if config directory exists
+# ensure that the config directory exists
 ensure_dir(f"{HOME}/.config/hue-tui/")
 # START-UP PROCEDURE
 # check if config exists, then check for connection to Bridge
@@ -583,7 +627,9 @@ else:
     H = Hue(login()["ip"], login()["user"])
 
     if int(H.checkup()) == 1:
-        raise Exception("Error while connecting to the Hue API")
+        raise Exception("An error occurred while connecting to the Hue API. "
+                        "Make sure that your bridge is online and that your "
+                        "login credentials are correct.")
         sys.exit(0)
 
     root = cui.PyCUI(6, 4)
