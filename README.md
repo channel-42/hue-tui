@@ -1,11 +1,11 @@
 # hue-tui [![](https://img.shields.io/badge/version-0.3-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
-> A tui for Philips Hue
+*a tui for Philips Hue*
 
-![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
+![Screenshot](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/screen.jpg "A pretty screenshot")
 
 ## About 
 
-**hue-tui** is a tui *(Terminal User Interface)* that allows for easy control of your Philips Hue lights. It uses my Hue-API library [hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
+**hue-tui** is a **t**erminal **u**ser **i**nterface that allows for easy control of your Philips Hue lights. It uses my Hue-API library [hue-snek](https://github.com/channel-42/hue-snek) to communicate with the bridge.
 
 ## Installation
 
@@ -22,13 +22,18 @@ Launch hui-tui by typing `huetui` into your terminal.
 ### Dependencies
 
 - python3
+- pip
 
-The following dependencies should be downloaded automatically when installing via pip. If you're cloning the repo, make sure to manually install them.
+The following dependencies are downloaded automatically when installing via pip. If you're cloning the repo, make sure to manually install them.
 
-- hue-snek  --> `pip install hue-snek-channel42`
-- py_cui    --> `pip install py-cui`
-- Pillow    --> `pip install Pillow`
-- colormath --> `pip install colormath`
+- hue-snek
+- py_cui
+- Pillow
+- colormath
+- colorthief
+```bash
+pip -U install hue-snek-channel42 py-cui Pillow colormath colorthief
+```
 
 ## Setup process
 
@@ -36,9 +41,9 @@ To be able to use hue-tui, you need to have your bridge's IP address and a API u
 
 Once you have the IP address and unsername, you can start hue-tui by typin `huetui` into a terminal. This should open the first-time-setup, where you can input your IP and username. 
 
-<img align="left" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/master/.resources/setup1.png">    
+<img align="left" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/setup1.png">    
 
-<img align="right" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/master/.resources/setup2.png">    
+<img align="right" width=47% padding="4" border="20" src="https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/setup2.png">    
 
 <br><br><br> 
        
