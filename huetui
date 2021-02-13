@@ -27,8 +27,6 @@ from hue_snek_pkg.hue_snek import Hue, Light
 # change config path here if needed
 CONFIG_PATH = "~/.config/hue-tui/config.py"
 
-# add config to python path and import
-sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
 HOME = expanduser("~")
 
 
@@ -49,9 +47,9 @@ def copy_config(file_path):
     """copy_config.
     write a copy of the sample config to ~/.config/hue-tui/config.py
     """
-    ensure_dir(os.path.expanduser(CONFIG_PATH))
+    ensure_dir(os.path.expanduser(file_path))
     # replace with config path
-    with open(os.path.expanduser(CONFIG_PATH), "w") as f:
+    with open(os.path.expanduser(file_path), 'w', encoding='utf-8') as f:
         f.write("import py_cui\n"
                 "# general\n"
                 "WPP = None\n"
@@ -61,9 +59,9 @@ def copy_config(file_path):
                 "COLOR = py_cui.WHITE_ON_BLACK\n"
                 "SELECTED_COLOR = py_cui.CYAN_ON_BLACK\n"
                 "BORDER_COLOR = py_cui.BLUE_ON_BLACK\n"
-                "LOGO_COLOR = py_cui.MAGENTA_ON_BLACK\n"
-                "STATUSBAR_COLOR = py_cui.BLACK_ON_MAGENTA\n"
-                "TITLEBAR_COLOR = py_cui.BLACK_ON_MAGENTA\n"
+                "LOGO_COLOR = py_cui.CYAN_ON_BLACK\n"
+                "STATUSBAR_COLOR = py_cui.BLACK_ON_WHITE\n"
+                "TITLEBAR_COLOR = py_cui.BLACK_ON_WHITE\n"
                 "# dict for preset hue colors\n"
                 "COLOR_DICT = {\n"
                 "   \"red\": \"#DE3838\",\n"
@@ -74,12 +72,15 @@ def copy_config(file_path):
                 "}\n")
 
 
+# add config to python path and import
+sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
 # check if config file exists if not write sample
 try:
     import config
-except ImportError:
+except Exception:
     copy_config(CONFIG_PATH)
-    import config
+    print("Config file created. Please start huetui again.")
+    sys.exit(0)
 
 
 def login():
