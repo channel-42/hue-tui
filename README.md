@@ -1,7 +1,7 @@
 # huetui [![](https://img.shields.io/badge/version-1.0-green.svg)](https://pypi.org/project/huetui/) [![Downloads](https://pepy.tech/badge/huetui)](https://pepy.tech/project/huetui) ![](https://img.shields.io/badge/license-MIT-orange.svg) 
 *a tui for Philips Hue*
 
-![Screenshot](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/screen.jpg "A pretty screenshot")
+![Screenshot](https://github.com/channel-42/hue-tui/blob/master/.resources/screen.jpg "A pretty screenshot")
 
 ## About 
 
@@ -41,12 +41,12 @@ To be able to use huetui, you need to have your bridge's IP address and a API us
 
 Once you have the IP address and api-user, start the tui with `huetui`. huetui will generate a sample config in `~/.config/huetui` and prompt you to run the command again. Then, the first-time-setup will prompt you to enter the bridge's IP and your api-user. 
 
-![setup](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/setup1.png "entering information")
+![setup](https://github.com/channel-42/hue-tui/blob/master/.resources/setup1.png "entering information")
 To input your information, navigate the cursor to textfields using the arrow keys and press ENTER. Type or paste in the user info (i.e. IP or api-user) and exit the textfield using ESC. 
 > Tip: pasting with e.g. CTRL-SHIFT-V works (check what the pasting binding is in your specific terminal emulator)
 > The statusbar at the bottom will show a help text
 
-![setup complete](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/setup2.png "setup complete")
+![setup complete](https://github.com/channel-42/hue-tui/blob/master/.resources/setup2.png "setup complete")
 
 
 After entering your information, press ENTER on the "Make Login" button and a popup showing your IP and username should appear. Press ENTER to dismiss the popup and restart huetui (press q to exit).    
@@ -55,7 +55,7 @@ After re-opening huetui you should see all your lights, groups, scenes, etc. lik
 
 ## Using huetui
 
-![](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/huetui.gif)
+![](https://github.com/channel-42/hue-tui/blob/master/.resources/huetui.gif)
 
 ### Using huetui is easy:   
 
