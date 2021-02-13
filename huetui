@@ -1,25 +1,40 @@
 #!/usr/bin/env python3
 '''
-New features from last realese: xrdb colors,
+HUE-TUI
+a terminal user interface for controlling hue lights
+
+written by channel-42
 '''
+# general imports
 import sys
 import json
 import os
 import time
-import re, fnmatch, random, subprocess
+import random
+import subprocess
 import py_cui as cui
-from PIL import ImageColor, Image
+
+# needed for color calculation
+from colorthief import ColorThief
+from PIL import ImageColor
 from colormath.color_objects import XYZColor, sRGBColor
 from colormath.color_conversions import convert_color
 from os.path import expanduser
+
+# needed for bridge communication
 from hue_snek_pkg.hue_snek import Hue, Light
+
+# change config path here if needed
+CONFIG_PATH = "~/.config/hue-tui/config.py"
 
 HOME = expanduser("~")
 
 
+# some general functions to run before the TUI starts
 def ensure_dir(file_path):
     """ensure_dir.
-    makes sure that directory exists and creates one should the directory not exist
+    makes sure that directory exists and creates one should
+    the directory not exist
     Args:
         file_path: path to file
     """
@@ -28,9 +43,49 @@ def ensure_dir(file_path):
         os.makedirs(directory)
 
 
+def copy_config(file_path):
+    """copy_config.
+    write a copy of the sample config to ~/.config/hue-tui/config.py
+    """
+    ensure_dir(os.path.expanduser(file_path))
+    # replace with config path
+    with open(os.path.expanduser(file_path), 'w', encoding='utf-8') as f:
+        f.write("import py_cui\n"
+                "# general\n"
+                "WPP = None\n"
+                "UNICODE = True\n"
+                "STEP_SIZE = 30\n"
+                "# colors\n"
+                "COLOR = py_cui.WHITE_ON_BLACK\n"
+                "SELECTED_COLOR = py_cui.CYAN_ON_BLACK\n"
+                "BORDER_COLOR = py_cui.BLUE_ON_BLACK\n"
+                "LOGO_COLOR = py_cui.CYAN_ON_BLACK\n"
+                "STATUSBAR_COLOR = py_cui.BLACK_ON_WHITE\n"
+                "TITLEBAR_COLOR = py_cui.BLACK_ON_WHITE\n"
+                "# dict for preset hue colors\n"
+                "COLOR_DICT = {\n"
+                "   \"red\": \"#DE3838\",\n"
+                "   \"blue\": \"#2122E2\",\n"
+                "   \"green\": \"#2EF615\",\n"
+                "   \"purple\": \"#5c0099\",\n"
+                "   \"teal\": \"#26F0C9\"\n"
+                "}\n")
+
+
+# add config to python path and import
+sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
+# check if config file exists if not write sample
+try:
+    import config
+except Exception:
+    copy_config(CONFIG_PATH)
+    print("Config file created. Please start huetui again.")
+    sys.exit(0)
+
+
 def login():
     """login.
-    checks if userdata has been inserted into json file
+    checks if login file with filled fields exitsts
     """
     try:
         with open(f"{HOME}/.config/hue-tui/login.json") as f:
@@ -39,8 +94,12 @@ def login():
             user = data["user"]
         if (ip != "") and (user != ""):
             return data
-    except:
-        #raise Exception("No IP and/or API user found")
+        else:
+            raise Exception("Error while reading login config. "
+                            "The IP and/or api user seem to be empty. "
+                            "Please check the config file or regenate it.")
+            sys.exit(os.EX_IOERR)
+    except OSError:
         return 1
 
 
@@ -48,9 +107,15 @@ class LoginMaker:
     """LoginMaker.
     Main login creator
     """
-    def __init__(self, master):
-        self.master = master
 
+    def __init__(self, master):
+        """__init__.
+        Args:
+            master: py_cui root module
+        """
+        self.master = master
+        if config.UNICODE:
+            self.master.toggle_unicode_borders()
         self.ip_field = self.master.add_text_box("Enter bridge's IP", 0, 0, 1,
                                                  2)
         self.user_field = self.master.add_text_box("Enter the API user", 1, 0,
@@ -61,6 +126,22 @@ class LoginMaker:
                                                     1,
                                                     2,
                                                     command=self.make_login)
+        # add help text
+        self.ip_field.set_help_text("IP: enter your bridges IP addr."
+                                    " ESC to exit field")
+        self.user_field.set_help_text("USER: enter your api user."
+                                      " ESC to exit field")
+        # set colorscheme
+        for key in self.master._widgets.keys():
+            self.master.get_widgets()[key].set_color(config.COLOR)
+            self.master.get_widgets()[key].set_selected_color(
+                config.SELECTED_COLOR)
+            self.master.get_widgets()[key].set_border_color(
+                config.BORDER_COLOR)
+            # broken for some reason
+            # self.master.get_widgets()[key].set_focus_border_color(config.BORDER_SELECTED_COLOR)
+        self.master.status_bar.set_color(config.STATUSBAR_COLOR)
+        self.master.title_bar.set_color(config.TITLEBAR_COLOR)
 
     def make_login(self):
         """make_login.
@@ -80,46 +161,49 @@ class LoginMaker:
 class HueTui:
     def __init__(self, master):
         """__init__.
-
         Args:
             master: py_cui root module
         """
         self.master = master
         self.scene = None
-        self.bridge = []  #bridge info array
-        self.active = ""
-        self.step = 30
+        self.bridge = []  # bridge info array
+        self.active = list()
+        self.step = config.STEP_SIZE
         self.disco = False
+        self.WALL = None
+        # used for changing light and group color
+        self.color_dict = config.COLOR_DICT
+        self.colors = ["red", "blue", "green", "purple", "teal"]
 
-        #add banner
-        self.master.add_block_label(str(self.get_logo_text()), 0, 0, 1, 2)
+        # will be added when fixed
+        # self.border_selected_color = None
+        # set unicode borders
+        if config.UNICODE:
+            self.master.toggle_unicode_borders()
+        # add banner
+        self.logo = self.master.add_block_label(
+            str(self.get_logo_text()), 0, 0, 1, 2)
 
-        #parse wallpaper file path
-        try:
-            with open(f"{HOME}/.config/hue-tui/login.json") as f:
-                data = json.load(f)
-                self.WALL = data["wpp"]
-        except:
-            self.WALL = None
-
-        #items for each menu
+        # items for each menu
         self.lights = H.get_lights("name").values()
         self.groups = H.get_groups("name").values()
         self.scenes = H.get_scenes("name").values()
-
-        #add items to bridge array (dict -> array)
+        # add items to bridge array (dict -> array)
         for param, val in H.get_bridge_info().items():
             self.bridge.append(f"{param}: {val}")
         counter = 0
         for light in H.get_lights():
             counter += 1
         self.bridge.append(f"detected lights: {counter}")
-
-        #creating each menu
+        # creating each menu
         self.lights_menu = self.master.add_scroll_menu("Lights", 1, 0, 2, 2)
         self.groups_menu = self.master.add_scroll_menu("Groups", 3, 0, 2, 2)
         self.scenes_menu = self.master.add_scroll_menu("Scenes", 1, 2, 2, 2)
-        self.active_box = self.master.add_text_block("Active", 3, 2, 2, 2)
+        self.active_box = self.master.add_scroll_menu("Active", 3, 2, 2, 2)
+        # add active lights and groups to self.active
+        # this also inits self.active_box with text
+        self.is_active()
+        self.active_box.set_selectable(False)
         self.bridge_information = self.master.add_scroll_menu(
             "Hue Bridge", 0, 2, 1, 2)
         self.xdrb_random = self.master.add_button("random XRDB colors",
@@ -130,42 +214,90 @@ class HueTui:
                                                   command=self.set_xrdb_colors)
         self.wallpaper_color = self.master.add_button(
             "wallpaper colors", 5, 2, 1, 2, command=self.set_wallpaper_colors)
-        #adding items to each menu
+        # add help text for statusbar
+        self.lights_menu.set_help_text("Lights: arrow keys to navigate,"
+                                       " j and k to change brightness,"
+                                       " c to set color,"
+                                       " d for disco mode, ENTER to toggle,"
+                                       " ESC to exit")
+        self.groups_menu.set_help_text("Groups: arrow keys to navigate,"
+                                       " j and k to change brightness,"
+                                       " c to set color,"
+                                       " ENTER to toggle, ESC to exit")
+        self.scenes_menu.set_help_text("Scenes: arrow keys to navigate,"
+                                       " ENTER to select,"
+                                       " ESC to exit")
+        # adding items to each menu
         self.lights_menu.add_item_list(self.lights)
         self.groups_menu.add_item_list(self.groups)
         self.scenes_menu.add_item_list(self.scenes)
         self.bridge_information.add_item_list(self.bridge)
 
-        self.is_active()
-
-        #adding keycommands
-        #LIGHTS
+        self.master.set_widget_cycle_key(cui.keys.KEY_TAB)
+        # adding keycommands
+        # LIGHTS
         self.lights_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_light)
-        self.lights_menu.add_key_command(cui.keys.KEY_J_LOWER,
-                                         command=self.inc_light_bri)
         self.lights_menu.add_key_command(cui.keys.KEY_K_LOWER,
+                                         command=self.inc_light_bri)
+        self.lights_menu.add_key_command(cui.keys.KEY_J_LOWER,
                                          command=self.dec_light_bri)
         self.lights_menu.add_key_command(cui.keys.KEY_D_LOWER,
                                          self.disco_toggle)
-        #GROUPS
+        self.lights_menu.add_key_command(cui.keys.KEY_C_LOWER,
+                                         self.light_color_popup)
+
+        # GROUPS
         self.groups_menu.add_key_command(cui.keys.KEY_ENTER, self.toggle_group)
-        self.groups_menu.add_key_command(cui.keys.KEY_J_LOWER,
-                                         self.inc_group_bri)
         self.groups_menu.add_key_command(cui.keys.KEY_K_LOWER,
+                                         self.inc_group_bri)
+        self.groups_menu.add_key_command(cui.keys.KEY_J_LOWER,
                                          self.dec_group_bri)
-        #SCENES
+        self.groups_menu.add_key_command(cui.keys.KEY_C_LOWER,
+                                         self.group_color_popup)
+        # SCENES
         self.scenes_menu.add_key_command(cui.keys.KEY_ENTER,
                                          command=self.scene_popup)
+        # setup colors
+        self.load_wpp()
+        for key in self.master._widgets.keys():
+            self.master.get_widgets()[key].set_color(config.COLOR)
+            self.master.get_widgets()[key].set_selected_color(
+                config.SELECTED_COLOR)
+            self.master.get_widgets()[key].set_border_color(
+                config.BORDER_COLOR)
+            # broken for some reason
+            # self.master.get_widgets()[key].set_focus_border_color(config.BORDER_SELECTED_COLOR)
+        self.logo.set_color(config.LOGO_COLOR)
+        self.master.status_bar.set_color(config.STATUSBAR_COLOR)
+        self.master.title_bar.set_color(config.TITLEBAR_COLOR)
+
+    def load_wpp(self):
+        """load_wpp.
+        Load user wallpaper from path (if set in config.py)
+        or from feh's temp file
+        """
+        # load wallpaper from given path or feh
+        if config.WPP is None:
+            try:
+                with open(f"{HOME}/.fehbg", "r") as bgf:
+                    bg_data = bgf.read().replace("\n", "").replace(
+                        "#!/bin/shfeh --no-fehbg --bg-fill '",
+                        "").replace("' ", "")
+                    self.WALL = bg_data
+            except Exception:
+                None
+        else:
+            self.WALL = config.WPP
 
     def toggle_light(self):
         """toggle_light.
         Toggles a light on or off
         """
-        #toggle a light
+        # toggle a light
         states = H.get_lights()
         for light in states.items():
             if str(self.lights_menu.get()) == str(light[1].name):
-                if light[1].state == True:
+                if light[1].state:
                     H.set_light(light[0], "on", "false")
                 else:
                     H.set_light(light[0], "on", "true")
@@ -176,11 +308,11 @@ class HueTui:
         """toggle_group.
         Toggle a entire group on or off
         """
-        #toggle a group
+        # toggle a group
         states = H.get_groups()
         for group in states.items():
             if str(self.groups_menu.get()) == str(group[1]["name"]):
-                if group[1]["action"]["on"] == True:
+                if group[1]["action"]["on"]:
                     H.set_group(group[0], "on", "false")
                 else:
                     H.set_group(group[0], "on", "true")
@@ -191,7 +323,7 @@ class HueTui:
         """scene_popup.
         Generates popup to select group to apply scene
         """
-        #main scene menu with popup to select which group is affected
+        # main scene menu with popup to select which group is affected
         groups = list(H.get_groups("name").values())
 
         self.scene = str(self.scenes_menu.get())
@@ -206,7 +338,7 @@ class HueTui:
         Args:
             inp: the selected group from the popup menu
         """
-        #enable scene
+        # enable scene
         group = str(inp)
         groups = H.get_groups("name")
 
@@ -219,7 +351,7 @@ class HueTui:
         """get_logo_text.
             makes the logo banner with linebreaks
         """
-        #make banner
+        # make banner
 
         logo = '██╗  ██╗██╗   ██╗███████╗              ████████╗██╗   ██╗██╗\n'
         logo = logo + '██║  ██║██║   ██║██╔════╝              ╚══██╔══╝██║   ██║██║\n'
@@ -234,22 +366,40 @@ class HueTui:
         """is_active.
         checks what lights and groups are active and adds them to a string
         """
-        self.active = "Lights:\n"
-
+        self.active.clear()
+        self.active_box.clear()
+        self.active.append("Lights:")
         for ident, light in H.get_lights().items():
-            if light.state == True:
+            if light.state:
+                light = str(light.name)
+                self.active.append(light)
+
+        self.active.append("")
+        self.active.append("Groups:")
+
+        for ident, value in H.get_groups().items():
+            if value["action"]["on"]:
+                group = str(H.get_group(int(ident), "name"))
+                self.active.append(group)
+
+        self.active_box.add_item_list(self.active)
+        """
+        self.active = "Lights:\n"
+        for ident, light in H.get_lights().items():
+            if light.state:
                 light = str(light.name)
                 self.active += f'{light}\n'
 
         self.active += '\nGroups:\n'
 
         for ident, value in H.get_groups().items():
-            if value["action"]["on"] == True:
+            if value["action"]["on"]:
                 group = str(H.get_group(int(ident), "name"))
                 self.active += f'{group}\n'
 
         self.active_box.clear()
         self.active_box.write(self.active)
+        """
 
     def hex_to_xy(self, hex_color):
         """hex_to_xyz.
@@ -266,29 +416,23 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        X = tup[0] / (tup[0] + tup[1] + tup[2])
-        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        if tup[0] + tup[1] + tup[2] > 0:
+            X = tup[0] / (tup[0] + tup[1] + tup[2])
+            Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        else:
+            X = 0
+            Y = 0.001
         return (X, Y)
 
     def get_xresources(self):
         """get_xresources.
-        Gets as colors from the users .Xresources file 
+        Gets as colors from the users .Xresources file
         Returns:
-            A array with all colors in hex    
+            A array with all colors in hex
         """
-        hex_array = []
-        cmd = ['xrdb', '-query', '|', 'grep', '"*color"']
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-
-        out_error_tuple = proc.communicate()
-        list_out = out_error_tuple[0].decode("ascii").split("\n")
-        matches = fnmatch.filter(list_out, '*color*')
-        for entry in matches:
-            cl = re.sub(r'.*#', '#', entry)
-            hex_array.append(cl)
-
+        cmd = "xrdb -query|grep 'color'|cut -f 2|sort -u"
+        hex_array = subprocess.check_output(
+            cmd, shell=True, universal_newlines=True).split('\n')[:-1]
         return hex_array
 
     def set_xrdb_colors(self):
@@ -314,20 +458,12 @@ class HueTui:
 
     def get_main_colors(self, file):
         """get_main_colors.
-        gets mail 4 colors from a given image file
+        gets main 4 colors from a given image file
         Args:
             file: path to image file
         """
-        ret = []
-        img = Image.open(file)
-        colors = img.convert("RGB").getcolors(200000000)
-        cnt = 0
-        for color in sorted(colors, reverse=True):
-            ret.append(color[1])
-            cnt += 1
-            if cnt == 4:
-                break
-        return ret
+        color_thief = ColorThief(file)
+        return color_thief.get_palette(color_count=3, quality=50)
 
     def rgb_to_xy(self, rgb_color):
         """rgb_to_xy.
@@ -341,8 +477,12 @@ class HueTui:
             XYZColor,
         )
         tup = xyz.get_value_tuple()
-        X = tup[0] / (tup[0] + tup[1] + tup[2])
-        Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        if tup[0] + tup[1] + tup[2] > 0:
+            X = tup[0] / (tup[0] + tup[1] + tup[2])
+            Y = tup[1] / (tup[0] + tup[1] + tup[2])
+        else:
+            X = 0
+            Y = 0.001
         return (X, Y)
 
     def set_wallpaper_colors(self):
@@ -351,7 +491,7 @@ class HueTui:
         """
         try:
             main_colors = self.get_main_colors(self.WALL)
-        except:
+        except Exception:
             self.master.show_error_popup(
                 "No wallpaper set",
                 "Check the config. e.g.: /home/<user>/path/to/file.jpg")
@@ -445,7 +585,7 @@ class HueTui:
         """disco_mode.
             toggle disco mode :^)
         """
-        if dummy == False:
+        if not dummy:
             return 1
         lights = H.get_lights()
         try:
@@ -461,11 +601,59 @@ class HueTui:
         except KeyboardInterrupt:
             return 1
 
+    def light_color_popup(self):
+        """group_color_popup.
+        Popup for selecting and setting a lights's color
+        """
+        self.light = str(self.lights_menu.get())
+        self.master.show_menu_popup("Which color should be applied?",
+                                    self.colors, self.set_light_color)
 
-#check if config directory exists
+    def set_light_color(self, inp):
+        """set_group_color.
+        Sets whole light's color to passed color
+        Args:
+            inp: color name passed by popup menu
+        """
+        color = self.color_dict[f"{inp}"]
+        lights = H.get_lights()
+        x = self.hex_to_xy(color)[0]
+        y = self.hex_to_xy(color)[1]
+        for light in lights.items():
+            if str(self.lights_menu.get()) == str(light[1].name):
+                H.set_light(light[0], "on", "true")
+                H.set_light(light[0], "xy", f"[{x}, {y}]")
+        return 0
+
+    def group_color_popup(self):
+        """group_color_popup.
+        Popup for selecting and setting a group's color
+        """
+        self.group = str(self.groups_menu.get())
+        self.master.show_menu_popup("Which color should be applied?",
+                                    self.colors, self.set_group_color)
+
+    def set_group_color(self, inp):
+        """set_group_color.
+        Sets whole group's color to passed color
+        Args:
+            inp: color name passed by popup menu
+        """
+        color = self.color_dict[f"{inp}"]
+        groups = H.get_groups()
+        x = self.hex_to_xy(color)[0]
+        y = self.hex_to_xy(color)[1]
+        for group in groups.items():
+            if str(self.groups_menu.get()) == str(group[1]['name']):
+                H.set_group(group[0], "on", "true")
+                H.set_group(group[0], "xy", f"[{x}, {y}]")
+        return 0
+
+
+# ensure that the config directory exists
 ensure_dir(f"{HOME}/.config/hue-tui/")
-#START-UP PROCEDURE
-#check if config exists, then check for connection to Bridge
+# START-UP PROCEDURE
+# check if config exists, then check for connection to Bridge
 if login() == 1:
     log = cui.PyCUI(3, 2)
     log.set_title("Login Maker")
@@ -476,7 +664,9 @@ else:
     H = Hue(login()["ip"], login()["user"])
 
     if int(H.checkup()) == 1:
-        raise Exception("Error while connecting to the Hue API")
+        raise Exception("An error occurred while connecting to the Hue API. "
+                        "Make sure that your bridge is online and that your "
+                        "login credentials are correct.")
         sys.exit(0)
 
     root = cui.PyCUI(6, 4)
