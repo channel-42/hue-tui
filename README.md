@@ -59,7 +59,7 @@ After re-opening hue-tui you should see all your lights, groups, scenes, etc. li
 
 ## Using hue-tui
 
-![](https://github.com/channel-42/hue-tui/blob/master/.resources/huetui.gif)
+![](https://github.com/channel-42/hue-tui/blob/feature_branch/.resources/huetui.gif)
 
 Using hue-tui is easy:   
 
