@@ -29,7 +29,6 @@ CONFIG_PATH = "~/.config/hue-tui/config.py"
 
 # add config to python path and import
 sys.path.append(os.path.dirname(os.path.expanduser(CONFIG_PATH)))
-import config
 HOME = expanduser("~")
 
 
@@ -44,6 +43,43 @@ def ensure_dir(file_path):
     directory = os.path.dirname(file_path)
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def copy_config(file_path):
+    """copy_config.
+    write a copy of the sample config to ~/.config/hue-tui/config.py
+    """
+    ensure_dir(os.path.expanduser(CONFIG_PATH))
+    # replace with config path
+    with open(os.path.expanduser(CONFIG_PATH), "w") as f:
+        f.write("import py_cui\n"
+                "# general\n"
+                "WPP = None\n"
+                "UNICODE = True\n"
+                "STEP_SIZE = 30\n"
+                "# colors\n"
+                "COLOR = py_cui.WHITE_ON_BLACK\n"
+                "SELECTED_COLOR = py_cui.CYAN_ON_BLACK\n"
+                "BORDER_COLOR = py_cui.BLUE_ON_BLACK\n"
+                "LOGO_COLOR = py_cui.MAGENTA_ON_BLACK\n"
+                "STATUSBAR_COLOR = py_cui.BLACK_ON_MAGENTA\n"
+                "TITLEBAR_COLOR = py_cui.BLACK_ON_MAGENTA\n"
+                "# dict for preset hue colors\n"
+                "COLOR_DICT = {\n"
+                "   \"red\": \"#DE3838\",\n"
+                "   \"blue\": \"#2122E2\",\n"
+                "   \"green\": \"#2EF615\",\n"
+                "   \"purple\": \"#5c0099\",\n"
+                "   \"teal\": \"#26F0C9\"\n"
+                "}\n")
+
+
+# check if config file exists if not write sample
+try:
+    import config
+except ImportError:
+    copy_config(CONFIG_PATH)
+    import config
 
 
 def login():
