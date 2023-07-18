@@ -3,6 +3,6 @@ from huetui.backend.bridge import Bridge
 from huetui.frontend.root import Root
 from huetui.backend.utils import Util 
 
-c = Util.load_config_file("~/.config/huetui2/config.py")
+c = Util.load_config_file("~/.config/huetui/config.py")
 b = Bridge("http://" + c.ip + "/api/" + c.api_user)
 r = Root(5, 4, "Hue TUI", b, c)
