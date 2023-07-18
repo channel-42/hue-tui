@@ -3,6 +3,7 @@ from click import MissingParameter
 import urllib3
 from os import path
 from sys import path as syspath
+from sys import exit as sysexit
 from os import makedirs 
 import json
 
@@ -166,10 +167,10 @@ class Util:
         try:
             from config import c
             return c
-        except Exception as e:
+        except ModuleNotFoundError:
             print("Config file not found. Generating a new config file.")
             ip = input("Bridge ip: ")
             api_user = input("Bridge api user: ")
             Util.generate_config_file(ip, api_user, config_path)
-            from config import c
-            return c           
+            print("Config file generated. Rerun huetui.")
+            sysexit(0)
