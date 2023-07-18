@@ -4,8 +4,10 @@ from huetui.backend.light import Light, RGB
 from huetui.backend.scene import Scene
 from huetui.backend.group import Group
 from os.path import expanduser
-
+from sys import exit as sysexit
+from traceback import print_exc
 from colorthief import ColorThief
+
 import random
 
 
@@ -46,10 +48,15 @@ class Bridge(Util):
         self._info: Info = None
 
         # init bridge from api
-        self._init_lights_from_api()
-        self._init_scenes_from_api()
-        self._init_groups_from_api()
-        self._init_info_from_api()
+        try:
+            self._init_lights_from_api()
+            self._init_scenes_from_api()
+            self._init_groups_from_api()
+            self._init_info_from_api()
+        except Exception:
+            print("Could not connect to bridge. Reason:")
+            print_exc(limit=1)
+            sysexit(1)
 
     def _init_lights_from_api(self) -> None:
         """
