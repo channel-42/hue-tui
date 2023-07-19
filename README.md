@@ -9,15 +9,37 @@
 
 ## Installation
 
-Install huetui with:
 
-`pip install huetui`
+### AUR
+An [AUR package](https://aur.archlinux.org/packages/huetui) is available for installation via an AUR helper:
+```bash
+paru -Syy huetui
+```
+
+### pip
+Install huetui with:
+```bash
+pip install huetui
+```
 
 This should fetch all the necessary dependencies. Nevertheless, make sure that all dependencies are installed.
 
 Launch huetui by typing `huetui` into your terminal.
 
-> Should you get the error `command not found: huetui`, restart your terminal. 
+> Should you get the error `command not found: huetui`, try restarting your terminal. Also, in case your upgrading from v1.0 to v2.0, please make sure to remove the old version before upgrading, as described below.
+
+### Important notice for upgrading from v1.0 to v2.0
+Should you have a previous version of huetui installed, **please remove it from your system before upgrading**, either by running
+
+```bash
+pip uninstall huetui
+```
+
+or deleting the script manually
+
+```bash
+cd ~ && rm .local/bin/huetui
+```
 
 ### Dependencies
 These dependencies are needed for installing and running huetui.
