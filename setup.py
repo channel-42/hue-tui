@@ -15,6 +15,7 @@ setuptools.setup(
     url="https://github.com/channel-42/hue-tui",
     scripts=["bin/huetui"],
     packages=setuptools.find_packages(),
+    python_requires='>=3.10',
     install_requires=[
         "urllib3",
         "click",
