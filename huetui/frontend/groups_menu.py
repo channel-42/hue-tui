@@ -1,11 +1,11 @@
 import py_cui.keys as Keys
 import py_cui.grid as Grid
 import py_cui.widgets as Widgets
-import subprocess
 
 from py_cui.debug import PyCUILogger as Logger
 from huetui.backend.bridge import Bridge
 from huetui.backend.light import RGB
+from huetui.frontend.utils import get_xrdb_colors
 
 
 class GroupMenu(Widgets.ScrollMenu):
@@ -39,53 +39,30 @@ class GroupMenu(Widgets.ScrollMenu):
         bridge: Bridge,
         master,
     ) -> None:
-        # get colors from xrdb
-        colors, err = subprocess.Popen(
-            ["xrdb", "-query"], stdout=subprocess.PIPE
-        ).communicate()
-        # parse colors
-        if err is None and len(colors) > 0:
-            # xrdb is working
-            colors = colors.decode().split("\n")
-            colors = [col.split("\t")[1] for col in colors if col.startswith("*.color")]
-            self.colors = {
-                "black": colors[0],
-                "gray": colors[1],
-                "red": colors[2],
-                "light red": colors[3],
-                "green": colors[4],
-                "light green": colors[5],
-                "yellow": colors[6],
-                "light yellow": colors[7],
-                "blue": colors[8],
-                "light blue": colors[9],
-                "magenta": colors[10],
-                "light magenta": colors[11],
-                "cyan": colors[12],
-                "light cyan": colors[13],
-                "white": colors[14],
-                "light white": colors[15],
-            }
-        else:
-            # xrdb is not working, use fallback colors
-            self.colors = {
-                "black": "#000000",
-                "gray": "#808080",
-                "red": "#800000",
-                "light red": "#ff0000",
-                "green": "#008000",
-                "light green": "#00ff00",
-                "yellow": "#808000",
-                "light yellow": "#ffff00",
-                "blue": "#000080",
-                "light blue": "#0000ff",
-                "magenta": "#800080",
-                "light magenta": "#ff00ff",
-                "cyan": "#008080",
-                "light cyan": "#00ffff",
-                "white": "#c0c0c0",
-                "light white": "#ffffff",
-            }
+        # set fallback colors in case xrdb is not available
+        self.colors = {
+            "black": "#000000",
+            "gray": "#808080",
+            "red": "#800000",
+            "light red": "#ff0000",
+            "green": "#008000",
+            "light green": "#00ff00",
+            "yellow": "#808000",
+            "light yellow": "#ffff00",
+            "blue": "#000080",
+            "light blue": "#0000ff",
+            "magenta": "#800080",
+            "light magenta": "#ff00ff",
+            "cyan": "#008080",
+            "light cyan": "#00ffff",
+            "white": "#c0c0c0",
+            "light white": "#ffffff",
+        }
+        # try get colors from xrdb
+        xrdb_colors = get_xrdb_colors()
+        if xrdb_colors is not None:
+            self.colors = xrdb_colors
+
         self.master = master
         self.groups = bridge.groups
         super(GroupMenu, self).__init__(
@@ -101,8 +78,7 @@ class GroupMenu(Widgets.ScrollMenu):
         self.add_key_command(Keys.KEY_ENTER, self.toggle)
         self.add_key_command(Keys.KEY_K_LOWER, command=self.inc_bri)
         self.add_key_command(Keys.KEY_J_LOWER, command=self.dec_bri)
-        self.add_key_command(Keys.KEY_C_LOWER,
-                                         self.popup)
+        self.add_key_command(Keys.KEY_C_LOWER, self.popup)
 
     def toggle(self) -> None:
         """Toggle group on/off."""
@@ -134,4 +110,3 @@ class GroupMenu(Widgets.ScrollMenu):
         self.groups[self.get_selected_item_index()].on = True
         for light in self.groups[self.get_selected_item_index()].lights:
             light.color = rgbCol
-
