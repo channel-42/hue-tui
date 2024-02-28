@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="huetui",
-    version="2.0",
+    version="2.1",
     author="channel-42",
     license="MIT",
     author_email="info@devls.de",
