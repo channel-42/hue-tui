@@ -25,6 +25,8 @@ def get_xrdb_colors() -> dict[str, str] | None:
                 colors = [
                     col.split("\t")[1] for col in colors if col.startswith("*.color")
                 ]
+                if len(colors) < 16:
+                    return None
                 return {
                     "black": colors[0],
                     "gray": colors[1],
